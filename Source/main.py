@@ -1,10 +1,31 @@
-import docx
-import faker
-import spacy
-from faker import Faker
+from docx import Document
 
-nlp = spacy.load("en_core_web_sm")
-fake=Faker()
+from detector import Detector
+from document_traversal import traverse_document
 
-print("fake,name:",fake.name())
-print("fake,address:",fake.address())
+
+doc = Document("IP/Red Herring Prospectus.docx")
+
+detector = Detector()
+
+LIMIT = 50
+
+count = 0
+
+for paragraph in traverse_document(doc):
+
+    count += 1
+
+    if count > LIMIT:
+        break
+
+    matches = detector.detect(paragraph.text)
+
+    if matches:
+
+        print("-" * 60)
+        print(f"Paragraph {count}")
+        print(paragraph.text)
+
+        for match in matches:
+            print(match)
