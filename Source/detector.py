@@ -201,7 +201,9 @@ class Detector:
 
         for ent in doc.ents:
 
-            print(f"[spaCy] {ent.text} ---> {ent.label_}")
+            DEBUG = False
+            if DEBUG:
+                print(f"[spaCy] {ent.text} ---> {ent.label_}")
 
             if ent.label_ not in allowed_entities:
                 continue

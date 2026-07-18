@@ -1,0 +1,25 @@
+============================================================
+PII DETECTION & REDACTION REPORT
+============================================================
+
+Generated On : 2026-07-18 11:04:59.564292
+Input File   : Red Herring Prospectus.docx
+Output File  : Red_Herring_Prospectus_Redacted.docx
+Paragraphs   : 336
+
+Detected Entities
+------------------------------------------------------------
+EMAIL               2
+GPE                 15
+ORG                 161
+PERSON              123
+------------------------------------------------------------
+TOTAL DETECTIONS : 301
+
+Evaluation Approach
+------------------------------------------------------------
+The generated report summarizes the detected entity counts for the processed document. Precision, Recall and F1-score require a manually annotated ground-truth dataset and therefore are not automatically calculated in the current version.
+
+============================================================
+Processing Completed Successfully
+============================================================

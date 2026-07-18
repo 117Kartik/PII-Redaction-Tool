@@ -1,6 +1,6 @@
 from pathlib import Path
 import sys
-
+from report import Report
 from docx import Document
 
 from detector import Detector
@@ -26,8 +26,8 @@ except PermissionError:
     sys.exit(1)
 
 
-DEBUG = True
-LIMIT = 50
+DEBUG = False
+LIMIT = None
 
 
 print(INPUT_FILE)
@@ -38,6 +38,7 @@ doc = Document(str(INPUT_FILE))
 
 detector = Detector()
 replacer = Replacer()
+report = Report()
 
 
 count = 0
@@ -46,23 +47,33 @@ for paragraph in traverse_document(doc):
 
     count += 1
 
-    if DEBUG and count > LIMIT:
+    if LIMIT is not None and count > LIMIT:
         break
 
     matches = detector.detect(paragraph.text)
+    report.add(matches)
 
     if not matches:
         continue
 
-    print("-" * 60)
-    print(f"Paragraph {count}")
-    print(paragraph.text)
+    # print("-" * 60)
+    # print(f"Paragraph {count}")
+    # print(paragraph.text)
 
     replacer.replace_in_paragraph(paragraph, matches)
 
 
 doc.save(str(OUTPUT_FILE))
+REPORT_FILE = OUTPUT_DIR / "Redaction_Report.txt"
+report.set_paragraph_count(count)
+
+report.save(
+    REPORT_FILE,
+    INPUT_FILE.name,
+    OUTPUT_FILE.name
+)
 
 print("\nDone!")
 print(f"Processed {count} paragraphs.")
 print(f"Redacted document saved to:\n{OUTPUT_FILE}")
+print(f"Report saved to:\n{REPORT_FILE}")

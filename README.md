@@ -8,6 +8,33 @@ It detects Personally Identifiable Information (PII) in Microsoft Word documents
 -Faker
 -Regular Expression (Regex)
 
+#Detection Approach
+The project uses a hybrid detection strategy:
+
+Regex is used for structured PII such as:
+    -Email Addresses
+    -Phone Numbers
+    -Date of Birth
+    -PAN
+    -Aadhaar
+    -Passport Numbers
+    -IP Addresses
+    -Credit Card Numbers
+spaCy NER is used to detect contextual entities such as:
+    -Person Names
+    -Organizations
+    -Locations
+
+
+#Detected PII value is replaced with realistic fake data generated using Faker. A mapping is maintained throughout execution to ensure that identical values are always replaced consistently across the document.
+
+
+#Output
+
+-Redacted Word Document (.docx) containing anonymized information.
+-Redaction Report summarizing the number and types of detected PII entities.
+
+
 #Flow
 1> Load your document file.
 2> Extract the key data and name it while preserving the format.
@@ -40,3 +67,15 @@ It detects Personally Identifiable Information (PII) in Microsoft Word documents
     ├── README.md
     ├── requirements.txt
     └── .gitignore
+
+
+#Limitations
+Although the hybrid approach performs well on many documents, Named Entity Recognition models may occasionally produce false positives or miss certain entities, especially in highly structured documents such as financial prospectuses.
+
+In near future the framework can be updated to Hugging Face (NER) or Microsoft Presidio for better results.
+
+#Report
+A complete quantitative evaluation (Precision, Recall and F1-score)
+requires a manually annotated ground-truth dataset. Since no
+ground-truth labels were available for this document, these
+metrics were not computed in the current implementation.
