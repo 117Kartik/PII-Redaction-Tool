@@ -106,6 +106,7 @@ class Replacer:
             for run in paragraph.runs:
 
                 if original in run.text:
+                    
                     run.text = run.text.replace(original, replacement)
 
 
@@ -126,3 +127,4 @@ class Replacer:
     
     def generate_location(self):
         return f"{self.fake.city()}, India"
+    

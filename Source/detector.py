@@ -71,6 +71,18 @@ class Detector:
             "OFFICER"
         }
 
+        self.spacy_blacklist = {
+            "Email",
+            "Cap Price",
+            "Floor Price",
+            "first",
+            "million",
+            "Book Running Lead Managers",
+            "Book Building Process",
+            "Basis for the Offer Price",
+            "The Floor Price"
+        }
+
     def detect_regex(self, text):
 
         matches = []
@@ -115,6 +127,65 @@ class Detector:
 
         return matches
 
+    def detect_promoter_names(self, text):
+
+        matches = []
+
+        pattern = re.compile(
+            r"\b[A-Z]{2,}(?:\s+[A-Z]{2,}){2,4}\b"
+        )
+
+        for match in pattern.finditer(text):
+
+            value = match.group().strip()
+
+            if "FAMILY TRUST" in value:
+                continue
+
+            if "LIMITED" in value:
+                continue
+
+            if "CORPORATE" in value:
+                continue
+
+            if "IDENTITY" in value:
+                continue
+
+            matches.append({
+                "type": "PERSON",
+                "value": value,
+                "start": match.start(),
+                "end": match.end(),
+                "source": "promoter_rule"
+            })
+
+        return matches
+
+    def clean_spacy_entity(self, value, label):
+
+        value = value.strip()
+
+        suffixes = [
+            " Company",
+            " Limited",
+            " Ltd.",
+            " LLP",
+            " Private Limited"
+        ]
+
+        if label == "ORG":
+
+            for suffix in suffixes:
+
+                if value.endswith(suffix):
+
+                    candidate = value[:-len(suffix)].strip()
+
+                    if len(candidate.split()) >= 2:
+                        return candidate, "PERSON"
+
+        return value, label
+
     def detect_spacy(self, text):
 
         matches = []
@@ -130,17 +201,70 @@ class Detector:
 
         for ent in doc.ents:
 
-            if ent.label_ in allowed_entities:
+            print(f"[spaCy] {ent.text} ---> {ent.label_}")
 
-                matches.append({
-                    "type": ent.label_,
-                    "value": ent.text,
-                    "start": ent.start_char,
-                    "end": ent.end_char,
-                    "source": "spacy"
-                })
+            if ent.label_ not in allowed_entities:
+                continue
+
+            value, entity_type = self.clean_spacy_entity(
+                ent.text,
+                ent.label_
+            )
+
+            if value in self.spacy_blacklist:
+                continue
+
+            if len(value) <= 2:
+                continue
+
+            matches.append({
+                "type": entity_type,
+                "value": value,
+                "start": ent.start_char,
+                "end": ent.end_char,
+                "source": "spacy"
+            })
 
         return matches
+
+    def post_process(self, matches):
+
+        processed = []
+
+        person_keywords = {
+            "Hegde",
+            "Malvadkar",
+            "Shetty",
+            "Kumar",
+            "Singh",
+            "Sharma",
+            "Verma",
+            "Patel",
+            "Gupta"
+        }
+
+        for match in matches:
+
+            value = match["value"]
+            entity_type = match["type"]
+
+            if entity_type == "ORG":
+
+                words = value.split()
+
+                if any(word in person_keywords for word in words):
+
+                    entity_type = "PERSON"
+
+            processed.append({
+                "type": entity_type,
+                "value": value,
+                "start": match["start"],
+                "end": match["end"],
+                "source": match["source"]
+            })
+
+        return processed
 
     def remove_duplicates(self, matches):
 
@@ -176,7 +300,10 @@ class Detector:
 
         matches.extend(self.detect_regex(text))
         matches.extend(self.detect_rules(text))
+        matches.extend(self.detect_promoter_names(text))
         matches.extend(self.detect_spacy(text))
+
+        matches = self.post_process(matches)
 
         matches = self.remove_duplicates(matches)
 
